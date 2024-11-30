@@ -1,0 +1,150 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id  String  @id
+  firstName String
+  lastName String
+  phoneNumber String
+  email String @unique
+  role UserRole @default(USER)
+  password String
+  courses Course[] 
+  comments Comment[]
+  ratings Rating[]
+  orders Order[]
+}
+
+model Course {
+  id  String  @id
+  name String
+  description String
+  timeDuration String
+  price  Float
+  status CourseStatus
+  type   CostType
+  lastUpdate DateTime
+  photo String 
+  episodes Episode[]
+  category Category  @relation(references:[id], fields:[categoryId], onDelete: SetNull)
+  categoryId String
+  master User @relation(references:[id], fields:[masterId], onDelete: SetNull)
+  masterId String
+  discount Discount[]  
+  comments Comment[]
+  ratings Rating[]
+  orders Order[]
+}
+
+model Episode {
+  id  String  @id
+  name String
+  video_url String
+  session_num Int 
+  time_duration String
+  course Course  @relation(references:[id], fields:[courseId], onDelete: Cascade)
+  courseId String
+}
+
+model Category {
+  id          String  @id
+  name        String
+  description String
+  parentId    String? // Scalar field for the foreign key
+  parent      Category? @relation("CategoryParent", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryParent")
+  courses     Course[]
+}
+
+
+
+model Discount {
+  id  String  @id
+  amount Float
+  code String
+  isExpired Boolean? @default(false)
+  startDate DateTime
+  expiredDate DateTime 
+  courses Course[]
+
+}
+
+model Comment {
+  id  String  @id
+  text String
+  createdDate DateTime @default(now())
+  user User @relation(references:[id], fields:[userId], onDelete: SetNull)
+  userId String
+  course Course  @relation(references:[id], fields:[courseId] ,onDelete: Cascade)
+  courseId String
+
+}
+
+model Rating {
+  id  String  @id
+  rate Int
+  user User @relation(references:[id], fields:[userId] ,onDelete: SetNull)
+  userId String
+  course Course  @relation(references:[id], fields:[courseId], onDelete: Cascade)
+  courseId String
+
+}
+
+model Order {
+  id  String  @id
+  user User @relation(references:[id], fields:[userId], onDelete: SetNull)
+  userId String
+  course Course  @relation(references:[id], fields:[courseId] ,onDelete: Cascade)
+  courseId String
+  totalAmount Float
+  status OrderStatus
+  orderDate DateTime @default(now())
+}
+
+model Payment {
+  id  String  @id
+  totalAmount Float
+  status PaymentStatus
+  paymentDate DateTime @default(now())
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  MASTER
+}
+
+enum CourseStatus {
+  COMPLETED
+  UNCOMPLETED
+}
+
+enum OrderStatus {
+  SUCCESSFUL
+  UNSUCCESSFUL
+  PENDING
+}
+
+enum PaymentStatus {
+  REJECTED
+  APPROVED
+
+}
+
+enum CostType {
+  FREE
+  COSTLY
+
+}
